@@ -76,6 +76,24 @@ class Relatorio:
             messagebox.showerror(
                 "Cadastro", "Por favor, preencha todos os campos.")
 
+    def tela_relatorio_por_tipo(self, tipo_material):
+        nova_janela = tk.Toplevel()
+        nova_janela.title(f"Relatório de {tipo_material}")
+        Sistema.centralizar_janela(nova_janela, 400, 400)
+        nova_janela.configure(bg="#f0f0f0")
+
+        tk.Label(nova_janela, text=f"Relatório de {tipo_material}", bg="#f0f0f0", fg="#333333",
+                 font=("Helvetica", 16)).pack(pady=20)
+
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT titulo, descricao, data, qtd_coletas, qtd_coletada, tipo_material FROM relatorio_mensal WHERE tipo_material=?", (tipo_material,))
+        relatorios = cursor.fetchall()
+        for relatorio in relatorios:
+            titulo, descricao, data, qtd_coletas, qtd_coletada, tipo_material = relatorio
+            tk.Label(nova_janela, text=f"{data} - {titulo}\nDescrição: {descricao}\nQuantidade de coletas: {qtd_coletas}\nQuantidade coletada: {qtd_coletada}\nTipo de material: {tipo_material}",
+                     bg="#f0f0f0", fg="#333333", font=("Helvetica", 12)).pack(pady=20)
+
 
 class Estoque:
     def __init__(self):
@@ -187,6 +205,32 @@ class Coordenador(Usuario):
         Sistema.centralizar_janela(janela, 400, 300)
         tk.Label(janela, text="Bem-vindo, Coordenador!",
                  font=("Helvetica", 16)).pack(pady=20)
+
+        tk.Button(janela, text="Ver Relatorio", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.ver_relatorio).pack(pady=20)
+
+    def ver_relatorio(self):
+        relatorio = Relatorio()
+
+        janela = tk.Toplevel()
+        janela.title("Relatório")
+        Sistema.centralizar_janela(janela, 400, 500)
+        janela.configure(bg="#f0f0f0")
+
+        tk.Label(janela, text="Relatorio", bg="#f0f0f0", fg="#333333",
+                 font=("Helvetica", 16)).pack(pady=20)
+        
+        tk.Button(janela, text="Plástico", bg="#4CAF50", fg="#ffffff", font=(
+             "Helvetica", 12)).pack(pady=30)
+        
+        tk.Button(janela, text="metal", bg="#4CAF50", fg="#ffffff", font=(
+             "Helvetica", 12)).pack(pady=30)
+        
+        tk.Button(janela, text="vidro", bg="#4CAF50", fg="#ffffff", font=(
+             "Helvetica", 12)).pack(pady=30)
+        
+        tk.Button(janela, text="papel", bg="#4CAF50", fg="#ffffff", font=(
+             "Helvetica", 12)).pack(pady=30)
 
 
 class Coletor(Usuario):
