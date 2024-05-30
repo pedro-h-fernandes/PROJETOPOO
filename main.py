@@ -20,6 +20,63 @@ class Tarefa:
                  font=("Helvetica", 16)).pack(pady=20)
 
 
+class Relatorio:
+    def __init__(self):
+        self.conn = sqlite3.connect('data.db')
+
+    def abrir_tela(self):
+        janela = tk.Toplevel()
+        janela.title("Estoque")
+        Sistema.centralizar_janela(janela, 500, 400)
+        janela.configure(bg="#f0f0f0")
+
+        tk.Label(janela, text="Relatório", bg="#f0f0f0",
+                 fg="#333333", font=("Helvetica", 16)).pack(pady=20)
+
+        entries = {}
+        campos = ["titulo", "descricao", "data do relatorio",
+                  "Quantidade de coletas", "quantidade coletada"]
+        y_positions = [60, 90, 120, 150, 180]
+
+        for campo, y in zip(campos, y_positions):
+            tk.Label(janela, text=f"{campo.capitalize()}:", bg="#f0f0f0", fg="#333333", font=(
+                "Helvetica", 12)).place(x=30, y=y)
+            entry = tk.Entry(janela, font=("Helvetica", 12),
+                             show="*" if campo == "password" else None)
+            entry.place(x=250, y=y)
+            entries[campo] = entry
+
+        # Adicionando Radiobuttons para os tipos de materiais
+        tipos_material = ["Plastico", "Vidro", "Metal", "Papel"]
+        self.tipo_material_var = tk.StringVar()
+        for i, tipo_material in enumerate(tipos_material):
+            tk.Radiobutton(janela, text=tipo_material, variable=self.tipo_material_var, value=tipo_material,
+                           bg="#f0f0f0", fg="#333333", font=("Helvetica", 12)).place(x=30, y=230 + i*30)
+
+        tk.Button(janela, text="Gerar Relatório", bg="#4CAF50", fg="#ffffff", font=("Helvetica", 12),
+                  command=lambda: self.gerar_relatorio(janela, entries)).place(x=250, y=200 + len(tipos_material)*30)
+
+    def gerar_relatorio(self, nova_janela, entries):
+        titulo = entries['titulo'].get()
+        descricao = entries['descricao'].get()
+        data = entries['data do relatorio'].get()
+        qtd_coletas = entries['Quantidade de coletas'].get()
+        qtd_coletada = entries['quantidade coletada'].get()
+        tipo_material = self.tipo_material_var.get()
+        tipo_material = tipo_material.lower()
+
+        if all([titulo, descricao, data, qtd_coletas, qtd_coletada, tipo_material]):
+            self.conn.execute("INSERT INTO relatorio_mensal (titulo, descricao, data_relatorio, qtd_coletas, qtd_coletada, tipo_material) VALUES (?, ?, ?, ?, ?, ?)",
+                              (titulo, descricao, data, qtd_coletas, qtd_coletada, tipo_material))
+            self.conn.commit()
+            messagebox.showinfo(
+                "Cadastro", "Relatório cadastrado com sucesso!")
+            nova_janela.destroy()
+        else:
+            messagebox.showerror(
+                "Cadastro", "Por favor, preencha todos os campos.")
+
+
 class Estoque:
     def __init__(self):
         self.conn = sqlite3.connect('data.db')
@@ -112,7 +169,8 @@ class Gestor(Usuario):
         Sistema.abrir_janela_criar_tarefa(self)
 
     def gerar_relatorio(self):
-        pass
+        relatorio = Relatorio()
+        relatorio.abrir_tela()
 
     def monitorarEstoque(self):
         estoque = Estoque()
@@ -325,6 +383,19 @@ class Sistema:
                             capacidade_max REAL NOT NULL,
                             local TEXT NOT NULL)
                         ''')
+
+        # Relatorio {data} - {titulo}\n descricao: {desricao}\n qtd_coletas: {qtd_coletas}\n qtd_coletada: {qtd_coletada}\n tipo_material: {tipo_material}
+
+        self.conn.execute(''' CREATE TABLE IF NOT EXISTS relatorio_mensal (
+                            cod_relatorio INTEGER PRIMARY KEY AUTOINCREMENT,
+                            titulo TEXT NOT NULL,
+                            descricao TEXT NOT NULL,
+                            data_relatorio DATE NOT NULL,
+                            qtd_coletas REAL NOT NULL,
+                            qtd_coletada REAL NOT NULL,
+                            tipo_material TEXT NOT NULL
+
+        )''')
 
     # faz o controle dos users padrao
         self.conn.execute('''CREATE TABLE IF NOT EXISTS controle_inserts
