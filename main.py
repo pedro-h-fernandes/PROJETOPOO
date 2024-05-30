@@ -20,6 +20,55 @@ class Tarefa:
                  font=("Helvetica", 16)).pack(pady=20)
 
 
+class Estoque:
+    def __init__(self):
+        self.conn = sqlite3.connect('data.db')
+
+    def abrir_tela(self):
+        janela = tk.Toplevel()
+        janela.title("Estoque")
+        Sistema.centralizar_janela(janela, 400, 500)
+        janela.configure(bg="#f0f0f0")
+
+        tk.Label(janela, text="Estoque", bg="#f0f0f0", fg="#333333",
+                 font=("Helvetica", 16)).pack(pady=20)
+
+        tk.Button(janela, text="Plástico", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.monitorar_plastico).pack(pady=30)
+        tk.Button(janela, text="Vidro", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.monitorar_vidro).pack(pady=32)
+        tk.Button(janela, text="Metal", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.monitorar_metal).pack(pady=34)
+        tk.Button(janela, text="Papel", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.monitorar_papel).pack(pady=36)
+
+    def buscar_dados_estoque(self, tipo_material):
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT quantidade_atual, capacidade_max, local FROM estoque WHERE tipo_material=?", (tipo_material,))
+        resultado = cursor.fetchone()
+
+        if resultado is None:
+            messagebox.showerror(
+                "Erro", f"Não há dados de estoque para {tipo_material}")
+        else:
+            quantidade_atual, capacidade_max, local = resultado
+        messagebox.showinfo(
+            "Estoque", f"Quantidade atual de {tipo_material}: {quantidade_atual}\nCapacidade máxima: {capacidade_max}\n Local: {local}")
+
+    def monitorar_plastico(self):
+        self.buscar_dados_estoque("plastico")
+
+    def monitorar_vidro(self):
+        self.buscar_dados_estoque("vidro")
+
+    def monitorar_metal(self):
+        self.buscar_dados_estoque("metal")
+
+    def monitorar_papel(self):
+        self.buscar_dados_estoque("papel")
+
+
 class Usuario:
     def __init__(self, id, username, password, cpf, email, nome, telefone, tipo):
         self.id = id
@@ -40,19 +89,34 @@ class Gestor(Usuario):
     def abrir_tela(self):
         janela = tk.Toplevel()
         janela.title("Tela do Gestor")
-        Sistema.centralizar_janela(janela, 400, 300)
-        tk.Label(janela, text="Bem-vind o, Gestor!",
+        Sistema.centralizar_janela(janela, 400, 500)
+        tk.Label(janela, text="Bem-vindo, Gestor!",
                  font=("Helvetica", 16)).pack(pady=20)
+
         tk.Button(janela, text="Cadastrar Coletor", bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.cadastrar_coletor).pack(pady=20)
+
         tk.Button(janela, text="Criar Tarefa", bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.criar_tarefa).pack(pady=30)
+
+        tk.Button(janela, text="Gerar Relatório", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.gerar_relatorio).pack(pady=35)
+
+        tk.Button(janela, text="Monitorar Estoque", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.monitorarEstoque).pack(pady=40)
 
     def cadastrar_coletor(self):
         Sistema.abrir_janela_cadastro_gestor(self)
 
     def criar_tarefa(self):
         Sistema.abrir_janela_criar_tarefa(self)
+
+    def gerar_relatorio(self):
+        pass
+
+    def monitorarEstoque(self):
+        estoque = Estoque()
+        estoque.abrir_tela()
 
 
 class Coordenador(Usuario):
@@ -181,7 +245,7 @@ class Sistema:
     def __init__(self, root):
         self.root = root
         self.root.title("Login")
-        self.centralizar_janela(self.root, 500, 200)
+        self.centralizar_janela(self.root, 500, 250)
         self.root.configure(bg="#f0f0f0")
 
         self.conn = sqlite3.connect('data.db')
@@ -192,6 +256,15 @@ class Sistema:
             self.root, "Nome de usuário:", 30, 30)
         self.password_entry = self.criar_campo(
             self.root, "Senha:", 70, 30, show="*")
+
+        self.tipo_usuario = tk.StringVar(value="")
+
+        tipos = ["Gestor", "Coordenador", "Coletor"]
+        y_tipo_positions = [120, 150, 180]
+
+        for tipo, y in zip(tipos, y_tipo_positions):
+            tk.Radiobutton(self.root, text=tipo, bg="#f0f0f0", fg="#333333",
+                           variable=self.tipo_usuario, value=tipo, font=("Helvetica", 12)).place(x=300, y=y)
 
         tk.Button(self.root, text="Login", bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.login).place(x=80, y=120)
@@ -245,6 +318,14 @@ class Sistema:
                             FOREIGN KEY (Coletor_id) REFERENCES usuarios(id))
                           ''')
 
+        self.conn.execute('''CREATE TABLE IF NOT EXISTS estoque (
+                            cod_armazen INTEGER PRIMARY KEY AUTOINCREMENT,
+                            tipo_material TEXT NOT NULL UNIQUE,
+                            quantidade_atual REAL NOT NULL,
+                            capacidade_max REAL NOT NULL,
+                            local TEXT NOT NULL)
+                        ''')
+
     # faz o controle dos users padrao
         self.conn.execute('''CREATE TABLE IF NOT EXISTS controle_inserts
                          (tabela TEXT PRIMARY KEY,
@@ -271,6 +352,27 @@ class Sistema:
             self.conn.execute(
                 '''INSERT INTO controle_inserts (tabela, inserido) VALUES (?, ?)''', ('coordenador', 1))
 
+        res = self.conn.execute(
+            '''SELECT inserido FROM controle_inserts WHERE tabela = 'estoque' ''').fetchone()
+        if res is None:
+            self.conn.execute('''INSERT INTO estoque (tipo_material, quantidade_atual, capacidade_max, local)
+                                VALUES (?, ?, ?, ?)''',
+                              ('plastico', '0', '200', 'Ecopoint plastico'))
+
+            self.conn.execute('''INSERT INTO estoque (tipo_material, quantidade_atual, capacidade_max, local)
+                                VALUES (?, ?, ?, ?)''',
+                              ('vidro', '0', '200', 'Ecopoint vidro'))
+
+            self.conn.execute('''INSERT INTO estoque (tipo_material, quantidade_atual, capacidade_max, local)
+                                VALUES (?, ?, ?, ?)''',
+                              ('papel', '0', '200', 'Ecopoint papel'))
+
+            self.conn.execute('''INSERT INTO estoque (tipo_material, quantidade_atual, capacidade_max, local)
+                                VALUES (?, ?, ?, ?)''',
+                              ('metal', '0', '200', 'Ecopoint metal'))
+            self.conn.execute(
+                '''INSERT INTO controle_inserts (tabela, inserido) VALUES (?, ?)''', ('estoque', 1))
+
         self.conn.commit()
 
     @staticmethod
@@ -291,10 +393,13 @@ class Sistema:
     def login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
+        tipo_usuario = self.tipo_usuario.get()
+        tipo_usuario = tipo_usuario.lower()
 
         cursor = self.conn.cursor()
         cursor.execute(
-            "SELECT * FROM usuarios WHERE username=? AND password=?", (username, password, ))
+            f"SELECT * FROM {tipo_usuario} WHERE username=? AND password=?", (username, password, ))
+
         usuario_data = cursor.fetchone()
 
         if usuario_data:
@@ -305,7 +410,9 @@ class Sistema:
 
     def abrir_tela_usuario(self, usuario_data):
         self.root.withdraw()
-        id, username, password, cpf, email, nome, telefone, tipo_usuario = usuario_data
+        id, username, password, cpf, email, nome, telefone = usuario_data
+        # Add this line to declare the missing variable
+        tipo_usuario = self.tipo_usuario.get()
 
         if tipo_usuario == "Gestor":
             Gestor(id, username, password, cpf,
@@ -339,7 +446,7 @@ class Sistema:
                  fg="#333333", font=("Helvetica", 12)).place(x=30, y=210)
         tipo_var = tk.StringVar(value="")
 
-        tipos = ["Gestor", "Coordenador", "Coletor"]
+        tipos = ["Gestor", "Coordenador"]
         y_tipo_positions = [210, 240, 270]
 
         for tipo, y in zip(tipos, y_tipo_positions):
@@ -419,11 +526,10 @@ class Sistema:
         email = entries['email'].get()
         nome = entries['nome'].get()
         telefone = entries['telefone'].get()
-        tipo = "Coletor"
 
-        if all([username, password, cpf, email, nome, telefone, tipo]):
-            self.conn.execute("INSERT INTO usuarios (username, password, cpf, email, nome, telefone, tipo) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                              (username, password, cpf, email, nome, telefone, tipo))
+        if all([username, password, cpf, email, nome, telefone]):
+            self.conn.execute("INSERT INTO coletor (username, password, cpf, email, nome, telefone) VALUES (?, ?, ?, ?, ?, ?)",
+                              (username, password, cpf, email, nome, telefone))
             self.conn.commit()
             messagebox.showinfo("Cadastro", "Coletor cadastrado com sucesso!")
             nova_janela.destroy()
@@ -439,10 +545,11 @@ class Sistema:
         nome = entries['nome'].get()
         telefone = entries['telefone'].get()
         tipo = tipo_var.get()
+        tipo = tipo.lower()
 
         if all([username, password, cpf, email, nome, telefone, tipo]):
-            self.conn.execute("INSERT INTO usuarios (username, password, cpf, email, nome, telefone, tipo) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                              (username, password, cpf, email, nome, telefone, tipo))
+            self.conn.execute(f"INSERT INTO {tipo} (username, password, cpf, email, nome, telefone) VALUES (?, ?, ?, ?, ?, ?)",
+                              (username, password, cpf, email, nome, telefone))
             self.conn.commit()
             messagebox.showinfo("Cadastro", "Usuário cadastrado com sucesso!")
             nova_janela.destroy()
