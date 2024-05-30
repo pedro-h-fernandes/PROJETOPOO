@@ -186,6 +186,7 @@ class Sistema:
 
         self.conn = sqlite3.connect('data.db')
         self.criar_tabelas()
+        self.inserir_users_padrao()
 
         self.username_entry = self.criar_campo(
             self.root, "Nome de usuário:", 30, 30)
@@ -207,9 +208,6 @@ class Sistema:
                               nome TEXT NOT NULL,
                               telefone TEXT NOT NULL)''')
 
-        self.conn.execute(
-            "INSERT INTO gestor (username, password, cpf, email, nome, telefone) VALUES ('adminG', 'adminG', '123342456789', 'gestor@email.com', 'Dolenc', '19999999999' ")
-
         self.conn.execute('''CREATE TABLE IF NOT EXISTS coordenador
                              (id INTEGER PRIMARY KEY AUTOINCREMENT,
                               username TEXT NOT NULL,
@@ -218,9 +216,6 @@ class Sistema:
                               email TEXT NOT NULL,
                               nome TEXT NOT NULL,
                               telefone TEXT NOT NULL)''')
-
-        self.conn.execute(
-            " INSERT INTO coordenador (username, password, cpf, email, nome, telefone) VALUES ('admin', 'admin', '12345678901', 'coordenador@email.com', 'Pedro', '12 212121212' ")
 
         self.conn.execute('''CREATE TABLE IF NOT EXISTS coletor
                              (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -231,9 +226,6 @@ class Sistema:
                               nome TEXT NOT NULL,
                               telefone TEXT NOT NULL)''')
 
-        self.conn.execute(
-            "INSERT INTO coletor (username, password, cpf, email, nome, telefone) VALUES ('Hideki', 'sugavara', '0000000000', 'hideki@sugavara.com', 'Vitor hideki', '32256987412' ")
-
         self.conn.execute('''CREATE TABLE IF NOT EXISTS coletas
                          (id INTEGER PRIMARY KEY AUTOINCREMENT,
                           coletor_id INTEGER NOT NULL,
@@ -243,7 +235,7 @@ class Sistema:
                           local TEXT NOT NULL,
                           FOREIGN KEY (coletor_id) REFERENCES usuarios(id))''')
 
-        self.conn.execute('''CREATE TABLE IF NOT EXISTS tarefa 
+        self.conn.execute('''CREATE TABLE IF NOT EXISTS tarefa
                             (id INTEGER PRIMARY KEY AUTOINCREMENT,
                             descricao TEXT NOT NULL,
                             data DATE NOT NULL,
@@ -252,6 +244,32 @@ class Sistema:
                             Coletor_id INTEGER NOT NULL,
                             FOREIGN KEY (Coletor_id) REFERENCES usuarios(id))
                           ''')
+
+    # faz o controle dos users padrao
+        self.conn.execute('''CREATE TABLE IF NOT EXISTS controle_inserts
+                         (tabela TEXT PRIMARY KEY,
+                          inserido INTEGER NOT NULL)''')
+
+        self.conn.commit()
+
+    def inserir_users_padrao(self):
+        res = self.conn.execute(
+            '''SELECT inserido FROM controle_inserts WHERE tabela = 'gestor' ''').fetchone()
+        if res is None:
+            self.conn.execute('''INSERT INTO gestor (username, password, cpf, email, nome, telefone)
+                                VALUES (?, ?, ?, ?, ?, ?)''',
+                              ('adminG', 'adminG', '123342456789', 'gestor@email.com', 'Dolenc', '19999999999'))
+            self.conn.execute(
+                '''INSERT INTO controle_inserts (tabela, inserido) VALUES (?, ?)''', ('gestor', 1))
+
+        res = self.conn.execute(
+            '''SELECT inserido FROM controle_inserts WHERE tabela = 'coordenador' ''').fetchone()
+        if res is None:
+            self.conn.execute('''INSERT INTO coordenador (username, password, cpf, email, nome, telefone)
+                                VALUES (?, ?, ?, ?, ?, ?)''',
+                              ('admin', 'admin', '12345678901', 'coordenador@email.com', 'Pedro', '12 212121212'))
+            self.conn.execute(
+                '''INSERT INTO controle_inserts (tabela, inserido) VALUES (?, ?)''', ('coordenador', 1))
 
         self.conn.commit()
 
