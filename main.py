@@ -1,16 +1,12 @@
 import tkinter as tk
 from tkinter import messagebox
 import sqlite3
+from datetime import datetime
 
 
-class Tarefa:
-    def __init__(self, id, descricao, data, hora, local, coletor_id):
-        self.id = id
-        self.descricao = descricao
-        self.data = data
-        self.hora = hora
-        self.local = local
-        self.coletor_id = coletor_id
+class Tarefa:  # Criar tarefas
+    def __init__(self):
+        self.conn = sqlite3.connect('data.db')
 
     def abrir_tela(self):
         janela = tk.Toplevel()
@@ -19,8 +15,29 @@ class Tarefa:
         tk.Label(janela, text="Bem-vindo, Gestor!",
                  font=("Helvetica", 16)).pack(pady=20)
 
+    def ver_tarefas(self, coletor_id):
+        janela = tk.Toplevel()
+        janela.title("Tarefas")
+        Sistema.centralizar_janela(janela, 400, 300)
+        tk.Label(janela, text="Bem-vindo, Coletor!",
+                 font=("Helvetica", 16)).pack(pady=20)
 
-class Relatorio:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT descricao, data, hora, local FROM tarefa WHERE coletor_id=?", (coletor_id,))
+        tarefas = cursor.fetchall()
+
+        if tarefas:
+            for tarefa in tarefas:
+                descricao, data, hora, local = tarefa
+                tk.Label(janela, text=f"{data} - {descricao}\nHora: {hora}\nLocal: {local}",
+                         bg="#f0f0f0", fg="#333333", font=("Helvetica", 12)).pack(pady=20)
+        else:
+            tk.Label(janela, text="Nenhuma tarefa encontrada.",
+                     bg="#f0f0f0", fg="#333333", font=("Helvetica", 12)).pack(pady=20)
+
+
+class Relatorio:  # Criar relatorio para o gestor
     def __init__(self):
         self.conn = sqlite3.connect('data.db')
 
@@ -95,7 +112,7 @@ class Relatorio:
                      bg="#f0f0f0", fg="#333333", font=("Helvetica", 12)).pack(pady=20)
 
 
-class Estoque:
+class Estoque:  # Criar e gerenciar o estoque
     def __init__(self):
         self.conn = sqlite3.connect('data.db')
 
@@ -144,7 +161,7 @@ class Estoque:
         self.buscar_dados_estoque("papel")
 
 
-class Usuario:
+class Usuario:  # Configuração inicial Usuario generico
     def __init__(self, id, username, password, cpf, email, nome, telefone, tipo):
         self.id = id
         self.username = username
@@ -157,7 +174,7 @@ class Usuario:
         self.conn = sqlite3.connect('data.db')
 
 
-class Gestor(Usuario):
+class Gestor(Usuario):  # Criar e gerir a aba e função do gestor
     def __init__(self, id, username, password, cpf, email, nome, telefone):
         super().__init__(id, username, password, cpf, email, nome, telefone, "Gestor")
 
@@ -195,7 +212,8 @@ class Gestor(Usuario):
         estoque.abrir_tela()
 
 
-class Coordenador(Usuario):
+class Coordenador(Usuario):  # Criar e gerir a aba e função do gestor
+
     def __init__(self, id, username, password, cpf, email, nome, telefone):
         super().__init__(id, username, password, cpf, email, nome, telefone, "Coordenador")
 
@@ -208,6 +226,18 @@ class Coordenador(Usuario):
 
         tk.Button(janela, text="Ver Relatorio", bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.ver_relatorio).pack(pady=20)
+        tk.Button(janela, text="Cadastrar Coletor", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.cadastrar_gestor).pack(pady=20)
+        tk.Button(janela, text="Cadastrar Empresa", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.cadastrar_empresa).pack(pady=20)
+        tk.Button(janela, text="Gerar relatorio", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.gerar_relatorio_mensal).pack(pady=20)
+
+    def cadastrar_gestor(self):
+        Sistema.abrir_janela_cadastro_coordenador(self)
+
+    def cadastrar_empresa(self):
+        Sistema.abrir_janela_cadastro_empresa(self)
 
     def ver_relatorio(self):
         relatorio = Relatorio()
@@ -219,131 +249,55 @@ class Coordenador(Usuario):
 
         tk.Label(janela, text="Relatorio", bg="#f0f0f0", fg="#333333",
                  font=("Helvetica", 16)).pack(pady=20)
-        
+
         tk.Button(janela, text="Plástico", bg="#4CAF50", fg="#ffffff", font=(
-             "Helvetica", 12)).pack(pady=30)
-        
+            "Helvetica", 12)).pack(pady=30)
+
         tk.Button(janela, text="metal", bg="#4CAF50", fg="#ffffff", font=(
-             "Helvetica", 12)).pack(pady=30)
-        
+            "Helvetica", 12)).pack(pady=30)
+
         tk.Button(janela, text="vidro", bg="#4CAF50", fg="#ffffff", font=(
-             "Helvetica", 12)).pack(pady=30)
-        
+            "Helvetica", 12)).pack(pady=30)
+
         tk.Button(janela, text="papel", bg="#4CAF50", fg="#ffffff", font=(
-             "Helvetica", 12)).pack(pady=30)
+            "Helvetica", 12)).pack(pady=30)
 
 
-class Coletor(Usuario):
-    def __init__(self, id, username, password, cpf, email, nome, telefone, conn=None):
+class Coletor(Usuario):  # Criar e gerir a aba e função do gestor
+    def __init__(self, id, username, password, cpf, email, nome, telefone, ):
         super().__init__(id, username, password, cpf, email, nome, telefone, "Coletor")
-        self.conn = conn
-
-    def abrir_tela(self):
-        if self.conn is None:
-            print("Erro: Conexão não foi definida.")
-            return
-
-        self.janela = tk.Toplevel()
-        self.janela.title("Tela do Coletor")
-        Sistema.centralizar_janela(self.janela, 400, 400)
-        tk.Label(self.janela, text="Bem-vindo, Coletor!",
-                 font=("Helvetica", 16)).pack(pady=20)
-        # Restante do código continua aqui
-        # Adicionar campos para o cadastro de coleta
-        tk.Label(self.janela, text="Data da Coleta:",
-                 font=("Helvetica", 12)).pack()
-        self.data_entry = tk.Entry(self.janela, font=("Helvetica", 12))
-        self.data_entry.pack()
-
-        tk.Label(self.janela, text="Tipo de Material:",
-                 font=("Helvetica", 12)).pack()
-        self.tipo_material_entry = tk.Entry(
-            self.janela, font=("Helvetica", 12))
-        self.tipo_material_entry.pack()
-
-        tk.Label(self.janela, text="Quantidade (kg):",
-                 font=("Helvetica", 12)).pack()
-        self.quantidade_entry = tk.Entry(self.janela, font=("Helvetica", 12))
-        self.quantidade_entry.pack()
-
-        tk.Label(self.janela, text="Local da Coleta:",
-                 font=("Helvetica", 12)).pack()
-        self.local_entry = tk.Entry(self.janela, font=("Helvetica", 12))
-        self.local_entry.pack()
-
-        # Botão para cadastrar coleta
-        tk.Button(self.janela, text="Cadastrar Coleta", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12), command=self.cadastrar_coleta).pack(pady=20)
 
     def cadastrar_coleta(self):
-        data = self.data_entry.get()
-        tipo_material = self.tipo_material_entry.get()
-        quantidade = self.quantidade_entry.get()
-        local = self.local_entry.get()
-
-        if all([data, tipo_material, quantidade, local]):
-            # Inserir os dados da coleta no banco de dados
-            self.conn.execute("INSERT INTO coletas (Coletor_id, data, tipo_material, quantidade, local) VALUES (?, ?, ?, ?, ?)",
-                              (self.id, data, tipo_material, quantidade, local))
-            self.conn.commit()
-            messagebox.showinfo("Cadastro de Coleta",
-                                "Coleta cadastrada com sucesso!")
-        else:
-            messagebox.showerror("Cadastro de Coleta",
-                                 "Por favor, preencha todos os campos.")
+        Sistema.abrir_janela_coleta(self)
 
     def abrir_tela(self):
-        self.janela = tk.Toplevel()
-        self.janela.title("Tela do Coletor")
-        Sistema.centralizar_janela(self.janela, 400, 400)
-        tk.Label(self.janela, text="Bem-vindo, Coletor!",
+        janela = tk.Toplevel()
+        janela.title("Tela do Coletor")
+        Sistema.centralizar_janela(janela, 400, 500)
+
+        tk.Label(janela, text="Bem-vindo, Coletor!",
                  font=("Helvetica", 16)).pack(pady=20)
+        tk.Button(janela, text="Cadastrar Coleta", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.cadastrar_coleta).pack(pady=40)
 
-        # Adicionar campos para o cadastro de coleta
-        tk.Label(self.janela, text="Data da Coleta:",
-                 font=("Helvetica", 12)).pack()
-        self.data_entry = tk.Entry(self.janela, font=("Helvetica", 12))
-        self.data_entry.pack()
+        tk.Button(janela, text="Ver tarefas", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.tarefas_view).pack(pady=43)
 
-        tk.Label(self.janela, text="Tipo de Material:",
-                 font=("Helvetica", 12)).pack()
-        self.tipo_material_entry = tk.Entry(
-            self.janela, font=("Helvetica", 12))
-        self.tipo_material_entry.pack()
+        tk.Button(janela, text="Alerta de estoque", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.alertar_gestor).pack(pady=43)
 
-        tk.Label(self.janela, text="Quantidade (kg):",
-                 font=("Helvetica", 12)).pack()
-        self.quantidade_entry = tk.Entry(self.janela, font=("Helvetica", 12))
-        self.quantidade_entry.pack()
+    def tarefas_view(self):
+        tarefa = Tarefa()
+        tarefa.ver_tarefas(self.id)
 
-        tk.Label(self.janela, text="Local da Coleta:",
-                 font=("Helvetica", 12)).pack()
-        self.local_entry = tk.Entry(self.janela, font=("Helvetica", 12))
-        self.local_entry.pack()
+    def alertar_gestor(self):
+        messagebox.showinfo(
+            "Enviado", "Alerta de estoque foi enviado com sucesso!")
 
-        # Botão para cadastrar coleta
-        tk.Button(self.janela, text="Cadastrar Coleta", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12), command=self.cadastrar_coleta).pack(pady=20)
-
-    def cadastrar_coleta(self):
-        data = self.data_entry.get()
-        tipo_material = self.tipo_material_entry.get()
-        quantidade = self.quantidade_entry.get()
-        local = self.local_entry.get()
-
-        if all([data, tipo_material, quantidade, local]):
-            # Inserir os dados da coleta no banco de dados
-            self.conn.execute("INSERT INTO coletas (Coletor_id, data, tipo_material, quantidade, local) VALUES (?, ?, ?, ?, ?)",
-                              (self.id, data, tipo_material, quantidade, local))
-            self.conn.commit()
-            messagebox.showinfo("Cadastro de Coleta",
-                                "Coleta cadastrada com sucesso!")
-        else:
-            messagebox.showerror("Cadastro de Coleta",
-                                 "Por favor, preencha todos os campos.")
+    # def tarefas_view(self):
 
 
-class Sistema:
+class Sistema:  # Funcoes de funcionamento da aplicação e gerir banco de dados
     def __init__(self, root):
         self.root = root
         self.root.title("Login")
@@ -408,6 +362,7 @@ class Sistema:
                           tipo_material TEXT NOT NULL UNIQUE,
                           quantidade REAL NOT NULL,
                           local TEXT NOT NULL,
+                          destino_final TEXT NOT NULL,
                           FOREIGN KEY (coletor_id) REFERENCES usuarios(id))''')
 
         self.conn.execute('''CREATE TABLE IF NOT EXISTS tarefa
@@ -427,6 +382,15 @@ class Sistema:
                             capacidade_max REAL NOT NULL,
                             local TEXT NOT NULL)
                         ''')
+
+        self.conn.execute('''CREATE TABLE IF NOT EXISTS empresa
+                             (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                              nome TEXT NOT NULL,
+                              email TEXT NOT NULL,
+                              cnpj TEXT NOT NULL UNIQUE,
+                              cidade TEXT NOT NULL,
+                              estado TEXT NOT NULL,
+                              telefone TEXT NOT NULL)''')
 
         # Relatorio {data} - {titulo}\n descricao: {desricao}\n qtd_coletas: {qtd_coletas}\n qtd_coletada: {qtd_coletada}\n tipo_material: {tipo_material}
 
@@ -472,19 +436,19 @@ class Sistema:
         if res is None:
             self.conn.execute('''INSERT INTO estoque (tipo_material, quantidade_atual, capacidade_max, local)
                                 VALUES (?, ?, ?, ?)''',
-                              ('plastico', '0', '200', 'Ecopoint plastico'))
+                              ('plastico', '0', '2000', 'Ecopoint plastico'))
 
             self.conn.execute('''INSERT INTO estoque (tipo_material, quantidade_atual, capacidade_max, local)
                                 VALUES (?, ?, ?, ?)''',
-                              ('vidro', '0', '200', 'Ecopoint vidro'))
+                              ('vidro', '0', '2000', 'Ecopoint vidro'))
 
             self.conn.execute('''INSERT INTO estoque (tipo_material, quantidade_atual, capacidade_max, local)
                                 VALUES (?, ?, ?, ?)''',
-                              ('papel', '0', '200', 'Ecopoint papel'))
+                              ('papel', '0', '2000', 'Ecopoint papel'))
 
             self.conn.execute('''INSERT INTO estoque (tipo_material, quantidade_atual, capacidade_max, local)
                                 VALUES (?, ?, ?, ?)''',
-                              ('metal', '0', '200', 'Ecopoint metal'))
+                              ('metal', '0', '2000', 'Ecopoint metal'))
             self.conn.execute(
                 '''INSERT INTO controle_inserts (tabela, inserido) VALUES (?, ?)''', ('estoque', 1))
 
@@ -572,6 +536,52 @@ class Sistema:
                   command=lambda: self.cadastrar_usuario(nova_janela, entries, tipo_var)).place(x=150, y=320)
 
     @staticmethod
+    def abrir_janela_coleta(self):
+        nova_janela = tk.Toplevel()
+        nova_janela.title("Cadastro de Coleta")
+        Sistema.centralizar_janela(nova_janela, 400, 400)
+        nova_janela.configure(bg="#f0f0f0")
+
+        entries = {}
+        campos = ["coletor_id", "data", "tipo_material",
+                  "quantidade", "local", "destino_final"]
+        y_positions = [30, 60, 90, 120, 150, 180]
+
+        for campo, y in zip(campos, y_positions):
+            tk.Label(nova_janela, text=f"{campo.capitalize()}:", bg="#f0f0f0", fg="#333333", font=(
+                "Helvetica", 12)).place(x=30, y=y)
+            entry = tk.Entry(nova_janela, font=("Helvetica", 12),
+                             show="*" if campo == "password" else None)
+            entry.place(x=150, y=y)
+            entries[campo] = entry
+
+        tk.Button(nova_janela, text="Cadastrar", bg="#4CAF50", fg="#ffffff", font=("Helvetica", 12),
+                  command=lambda: Sistema.cadastrar_coleta(self, nova_janela, entries)).place(x=150, y=220)
+
+    @staticmethod
+    def cadastrar_coleta(self, nova_janela, entries):
+        coletor_id = entries['coletor_id'].get()
+        data = entries['data'].get()
+        tipo_material = entries['tipo_material'].get()
+        quantidade = entries['quantidade'].get()
+        local = entries['local'].get()
+        destino_final = entries['destino_final'].get()
+
+        if all([coletor_id, data, tipo_material, quantidade, local]):
+            self.conn.execute("INSERT INTO coletas  (coletor_id, data, tipo_material, quantidade, local, destino_final) VALUES (?, ?, ?, ?, ?, ?)",
+                              (coletor_id, data, tipo_material, quantidade, local, destino_final))
+            self.conn.commit()
+# Atualiza a quantidade de material no estoque
+            self.conn.execute(
+                "UPDATE estoque SET quantidade_atual = quantidade_atual + ? WHERE tipo_material = ?", (quantidade, tipo_material))
+            self.conn.commit()
+            messagebox.showinfo("Cadastro", "Coleta cadastrada com sucesso!")
+            nova_janela.destroy()
+        else:
+            messagebox.showerror(
+                "Cadastro", "Por favor, preencha todos os campos.")
+
+    @staticmethod
     def abrir_janela_cadastro_gestor(self):
         nova_janela = tk.Toplevel()
         nova_janela.title("Cadastro de Coletor")
@@ -592,6 +602,49 @@ class Sistema:
 
         tk.Button(nova_janela, text="Cadastrar", bg="#4CAF50", fg="#ffffff", font=("Helvetica", 12),
                   command=lambda: Sistema.cadastrar_coletor(self, nova_janela, entries)).place(x=150, y=220)
+
+    @staticmethod
+    def abrir_janela_cadastro_coordenador(self):
+        nova_janela = tk.Toplevel()
+        nova_janela.title("Cadastro de Gestor")
+        Sistema.centralizar_janela(nova_janela, 400, 400)
+        nova_janela.configure(bg="#f0f0f0")
+
+        entries = {}
+        campos = ["username", "password", "cpf", "email", "nome", "telefone"]
+        y_positions = [30, 60, 90, 120, 150, 180]
+
+        for campo, y in zip(campos, y_positions):
+            tk.Label(nova_janela, text=f"{campo.capitalize()}:", bg="#f0f0f0", fg="#333333", font=(
+                "Helvetica", 12)).place(x=30, y=y)
+            entry = tk.Entry(nova_janela, font=("Helvetica", 12),
+                             show="*" if campo == "password" else None)
+            entry.place(x=150, y=y)
+            entries[campo] = entry
+
+        tk.Button(nova_janela, text="Cadastrar", bg="#4CAF50", fg="#ffffff", font=("Helvetica", 12),
+                  command=lambda: Sistema.cadastrar_gestor(self, nova_janela, entries)).place(x=150, y=220)
+
+    def abrir_janela_cadastro_empresa(self):
+        nova_janela = tk.Toplevel()
+        nova_janela.title("Cadastro de empresa")
+        Sistema.centralizar_janela(nova_janela, 400, 400)
+        nova_janela.configure(bg="#f0f0f0")
+
+        entries = {}
+        campos = ["nome", "email", "cnpj", "cidade", "estado", "telefone"]
+        y_positions = [30, 60, 90, 120, 150, 180]
+
+        for campo, y in zip(campos, y_positions):
+            tk.Label(nova_janela, text=f"{campo.capitalize()}:", bg="#f0f0f0", fg="#333333", font=(
+                "Helvetica", 12)).place(x=30, y=y)
+            entry = tk.Entry(nova_janela, font=("Helvetica", 12),
+                             show="*" if campo == "password" else None)
+            entry.place(x=150, y=y)
+            entries[campo] = entry
+
+        tk.Button(nova_janela, text="Cadastrar", bg="#4CAF50", fg="#ffffff", font=("Helvetica", 12),
+                  command=lambda: Sistema.cadastrar_empresa(self, nova_janela, entries)).place(x=150, y=220)
 
     @staticmethod
     def abrir_janela_criar_tarefa(self):
@@ -652,6 +705,44 @@ class Sistema:
             messagebox.showerror(
                 "Cadastro", "Por favor, preencha todos os campos.")
 
+    @staticmethod
+    def cadastrar_empresa(self, nova_janela, entries):
+        nome = entries['nome'].get()
+        email = entries['email'].get()
+        cnpj = entries['cnpj'].get()
+        cidade = entries['cidade'].get()
+        estado = entries['estado'].get()
+        telefone = entries['telefone'].get()
+
+        if all([nome, email, cnpj, cidade, estado, telefone]):
+            self.conn.execute("INSERT INTO empresa  (nome, email, cnpj, cidade, estado, telefone) VALUES (?, ?, ?, ?, ?, ?)",
+                              (nome, email, cnpj, cidade, estado, telefone))
+            self.conn.commit()
+            messagebox.showinfo("Cadastro", "Empresa cadastrada com sucesso!")
+            nova_janela.destroy()
+        else:
+            messagebox.showerror(
+                "Cadastro", "Por favor, preencha todos os campos.")
+
+    @staticmethod
+    def cadastrar_gestor(self, nova_janela, entries):
+        username = entries['username'].get()
+        password = entries['password'].get()
+        cpf = entries['cpf'].get()
+        email = entries['email'].get()
+        nome = entries['nome'].get()
+        telefone = entries['telefone'].get()
+
+        if all([username, password, cpf, email, nome, telefone]):
+            self.conn.execute("INSERT INTO gestor  (username, password, cpf, email, nome, telefone) VALUES (?, ?, ?, ?, ?, ?)",
+                              (username, password, cpf, email, nome, telefone))
+            self.conn.commit()
+            messagebox.showinfo("Cadastro", "Gestor cadastrado com sucesso!")
+            nova_janela.destroy()
+        else:
+            messagebox.showerror(
+                "Cadastro", "Por favor, preencha todos os campos.")
+
     def cadastrar_usuario(self, nova_janela, entries, tipo_var):
         username = entries['username'].get()
         password = entries['password'].get()
@@ -677,7 +768,7 @@ def encerrar_aplicacao():
     root.destroy()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # incializar o sistema.
     root = tk.Tk()
     sistema = Sistema(root)
     # Associando a função de encerramento à ação de fechar a janela
