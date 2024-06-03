@@ -220,21 +220,21 @@ class Coordenador(Usuario):  # Criar e gerir a aba e função do gestor
     def abrir_tela(self):
         janela = tk.Toplevel()
         janela.title("Tela do Coordenador")
-        Sistema.centralizar_janela(janela, 400, 300)
+        Sistema.centralizar_janela(janela, 400, 500)
         tk.Label(janela, text="Bem-vindo, Coordenador!",
                  font=("Helvetica", 16)).pack(pady=20)
 
         tk.Button(janela, text="Ver Relatorio", bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.ver_relatorio).pack(pady=20)
-        tk.Button(janela, text="Cadastrar Coletor", bg="#4CAF50", fg="#ffffff", font=(
+        tk.Button(janela, text="Cadastrar Gestor", bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.cadastrar_gestor).pack(pady=20)
         tk.Button(janela, text="Cadastrar Empresa", bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.cadastrar_empresa).pack(pady=20)
-        tk.Button(janela, text="Gerar relatorio", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12), command=self.gerar_relatorio_mensal).pack(pady=20)
-
+    
     def cadastrar_gestor(self):
         Sistema.abrir_janela_cadastro_coordenador(self)
+
+
 
     def cadastrar_empresa(self):
         Sistema.abrir_janela_cadastro_empresa(self)
@@ -326,6 +326,8 @@ class Sistema:  # Funcoes de funcionamento da aplicação e gerir banco de dados
             "Helvetica", 12), command=self.login).place(x=80, y=120)
         tk.Button(self.root, text="Cadastrar", bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.abrir_janela_cadastro).place(x=150, y=120)
+      
+    
 
     def criar_tabelas(self):
         self.conn.execute('''CREATE TABLE IF NOT EXISTS gestor
@@ -523,17 +525,17 @@ class Sistema:  # Funcoes de funcionamento da aplicação e gerir banco de dados
 
         tk.Label(nova_janela, text="Tipo de Usuário:", bg="#f0f0f0",
                  fg="#333333", font=("Helvetica", 12)).place(x=30, y=210)
-        tipo_var = tk.StringVar(value="")
+        
 
-        tipos = ["Gestor", "Coordenador"]
-        y_tipo_positions = [210, 240, 270]
+        #tipos = ["Coordenador"]
+        #y_tipo_positions = [210, 240, 270]
 
-        for tipo, y in zip(tipos, y_tipo_positions):
-            tk.Radiobutton(nova_janela, text=tipo, bg="#f0f0f0", fg="#333333",
-                           variable=tipo_var, value=tipo, font=("Helvetica", 12)).place(x=180, y=y)
+        #for tipo, y in zip(tipos, y_tipo_positions):
+           #tk.Radiobutton(nova_janela, text=tipo, bg="#f0f0f0", fg="#333333",
+                          # variable=tipo_var, value=tipo, font=("Helvetica", 12)).place(x=180, y=y)
 
         tk.Button(nova_janela, text="Cadastrar", bg="#4CAF50", fg="#ffffff", font=("Helvetica", 12),
-                  command=lambda: self.cadastrar_usuario(nova_janela, entries, tipo_var)).place(x=150, y=320)
+                  command=lambda: self.cadastrar_usuario(nova_janela, entries)).place(x=150, y=320)
 
     @staticmethod
     def abrir_janela_coleta(self):
@@ -743,17 +745,17 @@ class Sistema:  # Funcoes de funcionamento da aplicação e gerir banco de dados
             messagebox.showerror(
                 "Cadastro", "Por favor, preencha todos os campos.")
 
-    def cadastrar_usuario(self, nova_janela, entries, tipo_var):
+    def cadastrar_usuario(self, nova_janela, entries):
         username = entries['username'].get()
         password = entries['password'].get()
         cpf = entries['cpf'].get()
         email = entries['email'].get()
         nome = entries['nome'].get()
         telefone = entries['telefone'].get()
-        tipo = tipo_var.get()
-        tipo = tipo.lower()
+        tipo = "coordenador"
+        
 
-        if all([username, password, cpf, email, nome, telefone, tipo]):
+        if all([username, password, cpf, email, nome, telefone]):
             self.conn.execute(f"INSERT INTO {tipo} (username, password, cpf, email, nome, telefone) VALUES (?, ?, ?, ?, ?, ?)",
                               (username, password, cpf, email, nome, telefone))
             self.conn.commit()
