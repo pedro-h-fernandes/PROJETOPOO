@@ -1,8 +1,8 @@
+
 import tkinter as tk
 from tkinter import messagebox
 import sqlite3
-from datetime import datetime
-
+from tkinter import ttk
 
 class Tarefa:  # Criar tarefas
     def __init__(self):
@@ -181,22 +181,25 @@ class Gestor(Usuario):  # Criar e gerir a aba e função do gestor
     def abrir_tela(self):
         janela = tk.Toplevel()
         janela.title("Tela do Gestor")
-        Sistema.centralizar_janela(janela, 400, 500)
+        Sistema.centralizar_janela(janela, 400, 700)
         tk.Label(janela, text="Bem-vindo, Gestor!",
                  font=("Helvetica", 16)).pack(pady=20)
 
-        tk.Button(janela, text="Cadastrar Coletor", bg="#4CAF50", fg="#ffffff", font=(
+        tk.Button(janela, text="Cadastrar Coletor",width=20, bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.cadastrar_coletor).pack(pady=20)
 
-        tk.Button(janela, text="Criar Tarefa", bg="#4CAF50", fg="#ffffff", font=(
+        tk.Button(janela, text="Criar Tarefa",width=20, bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.criar_tarefa).pack(pady=30)
 
-        tk.Button(janela, text="Gerar Relatório", bg="#4CAF50", fg="#ffffff", font=(
+        tk.Button(janela, text="Gerar Relatório",width=20, bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.gerar_relatorio).pack(pady=35)
 
-        tk.Button(janela, text="Monitorar Estoque", bg="#4CAF50", fg="#ffffff", font=(
+        tk.Button(janela, text="Monitorar Estoque",width=20, bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.monitorarEstoque).pack(pady=40)
-
+        tk.Button(janela, text="Voltar login",width=20, bg="#0000FF", fg="#ffffff", font=(
+            "Helvetica", 12), command=lambda:voltar_login(janela)).pack(pady=20)
+        tk.Button(janela, text="Sair", bg="#FF0000",width=20 , fg="#ffffff", font=(
+            "Helvetica", 12), command=janela.quit).pack(pady=20)   
     def cadastrar_coletor(self):
         Sistema.abrir_janela_cadastro_gestor(self)
 
@@ -224,43 +227,48 @@ class Coordenador(Usuario):  # Criar e gerir a aba e função do gestor
         tk.Label(janela, text="Bem-vindo, Coordenador!",
                  font=("Helvetica", 16)).pack(pady=20)
 
-        tk.Button(janela, text="Ver Relatorio", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12), command=self.ver_relatorio).pack(pady=20)
-        tk.Button(janela, text="Cadastrar Gestor", bg="#4CAF50", fg="#ffffff", font=(
+        tk.Button(janela, text="Ver Relatorio",width=20, bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.gerar_relatorio_estoque).pack(pady=20)
+        tk.Button(janela, text="Cadastrar Gestor",width=20, bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.cadastrar_gestor).pack(pady=20)
-        tk.Button(janela, text="Cadastrar Empresa", bg="#4CAF50", fg="#ffffff", font=(
+        tk.Button(janela, text="Cadastrar Empresa",width=20, bg="#4CAF50", fg="#ffffff", font=(
             "Helvetica", 12), command=self.cadastrar_empresa).pack(pady=20)
-    
+        tk.Button(janela, text="Voltar login",width=20, bg="#0000FF", fg="#ffffff", font=(
+            "Helvetica", 12), command=lambda:voltar_login(janela)).pack(pady=20)
+        tk.Button(janela, text="Sair", bg="#FF0000",width=20 , fg="#ffffff", font=(
+            "Helvetica", 12), command=janela.quit).pack(pady=20)        
+        
     def cadastrar_gestor(self):
         Sistema.abrir_janela_cadastro_coordenador(self)
+    def gerar_relatorio_estoque(self):
+        
+        conn = sqlite3.connect('data.db')
+        cursor = conn.cursor()
 
+        
+        cursor.execute("SELECT * FROM relatorio_mensal")
+        estoque = cursor.fetchall()
 
-
+        root = tk.Tk()
+        root.title("Relatório de Estoque")
+        root.state('zoomed')
+        tree = ttk.Treeview(root)
+        tree["columns"] = ("Código", "Titulo", "Descrição", "Data relatorio", "Quantidade coletas","Quantidade coletada","Tipo Material")
+        
+        tree.heading("Código", text="Código", anchor=tk.W)
+        tree.heading("Titulo", text="Titulo", anchor=tk.W)
+        tree.heading("Descrição", text="Descrição", anchor=tk.W)
+        tree.heading("Data relatorio", text="Data relatorio", anchor=tk.W)
+        tree.heading("Quantidade coletas", text="Quantidade coletas", anchor=tk.W)
+        tree.heading("Quantidade coletada", text="Quantidade coletada", anchor=tk.W)
+        tree.heading("Tipo Material", text="Tipo Material", anchor=tk.W)    
+        for item in estoque:
+            tree.insert("", tk.END, values=item)
+        tree.pack(expand=True, fill=tk.BOTH)
     def cadastrar_empresa(self):
         Sistema.abrir_janela_cadastro_empresa(self)
 
-    def ver_relatorio(self):
-        relatorio = Relatorio()
-
-        janela = tk.Toplevel()
-        janela.title("Relatório")
-        Sistema.centralizar_janela(janela, 400, 500)
-        janela.configure(bg="#f0f0f0")
-
-        tk.Label(janela, text="Relatorio", bg="#f0f0f0", fg="#333333",
-                 font=("Helvetica", 16)).pack(pady=20)
-
-        tk.Button(janela, text="Plástico", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12)).pack(pady=30)
-
-        tk.Button(janela, text="metal", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12)).pack(pady=30)
-
-        tk.Button(janela, text="vidro", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12)).pack(pady=30)
-
-        tk.Button(janela, text="papel", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12)).pack(pady=30)
+    
 
 
 class Coletor(Usuario):  # Criar e gerir a aba e função do gestor
@@ -277,15 +285,21 @@ class Coletor(Usuario):  # Criar e gerir a aba e função do gestor
 
         tk.Label(janela, text="Bem-vindo, Coletor!",
                  font=("Helvetica", 16)).pack(pady=20)
-        tk.Button(janela, text="Cadastrar Coleta", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12), command=self.cadastrar_coleta).pack(pady=40)
+        tk.Button(janela, text="Cadastrar Coleta",width=20 ,bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12 ), command=self.cadastrar_coleta).pack(pady=20)
 
-        tk.Button(janela, text="Ver tarefas", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12), command=self.tarefas_view).pack(pady=43)
+        tk.Button(janela, text="Ver tarefas",width=20 , bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.tarefas_view).pack(pady=20)
 
-        tk.Button(janela, text="Alerta de estoque", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12), command=self.alertar_gestor).pack(pady=43)
-
+        tk.Button(janela, text="Alerta de estoque",width=20 , bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=self.alertar_gestor).pack(pady=20)
+        
+        tk.Button(janela, text="Voltar login",width=20, bg="#0000FF", fg="#ffffff", font=(
+            "Helvetica", 12), command=lambda:voltar_login(janela)).pack(pady=20) 
+               
+        tk.Button(janela, text="Sair", bg="#FF0000",width=20 , fg="#ffffff", font=(
+            "Helvetica", 12), command=janela.quit).pack(pady=20)
+        
     def tarefas_view(self):
         tarefa = Tarefa()
         tarefa.ver_tarefas(self.id)
@@ -295,7 +309,9 @@ class Coletor(Usuario):  # Criar e gerir a aba e função do gestor
             "Enviado", "Alerta de estoque foi enviado com sucesso!")
 
     # def tarefas_view(self):
-
+def voltar_login(janela):
+    janela.destroy()
+    root.deiconify()
 
 class Sistema:  # Funcoes de funcionamento da aplicação e gerir banco de dados
     def __init__(self, root):
@@ -323,10 +339,12 @@ class Sistema:  # Funcoes de funcionamento da aplicação e gerir banco de dados
                            variable=self.tipo_usuario, value=tipo, font=("Helvetica", 12)).place(x=300, y=y)
 
         tk.Button(self.root, text="Login", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12), command=self.login).place(x=80, y=120)
+            "Helvetica", 12), command=self.login).place(x=90, y=120)
         tk.Button(self.root, text="Cadastrar", bg="#4CAF50", fg="#ffffff", font=(
-            "Helvetica", 12), command=self.abrir_janela_cadastro).place(x=150, y=120)
-      
+            "Helvetica", 12), command=self.abrir_janela_cadastro).place(x=160, y=120)
+        tk.Button(self.root, text="Sair", bg="#4CAF50", fg="#ffffff", font=(
+            "Helvetica", 12), command=root.quit).place(x= 30, y = 120)
+
     
 
     def criar_tabelas(self):
@@ -347,6 +365,7 @@ class Sistema:  # Funcoes de funcionamento da aplicação e gerir banco de dados
                               email TEXT NOT NULL,
                               nome TEXT NOT NULL,
                               telefone TEXT NOT NULL)''')
+        
 
         self.conn.execute('''CREATE TABLE IF NOT EXISTS coletor
                              (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -394,7 +413,7 @@ class Sistema:  # Funcoes de funcionamento da aplicação e gerir banco de dados
                               estado TEXT NOT NULL,
                               telefone TEXT NOT NULL)''')
 
-        # Relatorio {data} - {titulo}\n descricao: {desricao}\n qtd_coletas: {qtd_coletas}\n qtd_coletada: {qtd_coletada}\n tipo_material: {tipo_material}
+        
 
         self.conn.execute(''' CREATE TABLE IF NOT EXISTS relatorio_mensal (
                             cod_relatorio INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -522,17 +541,6 @@ class Sistema:  # Funcoes de funcionamento da aplicação e gerir banco de dados
                              show="*" if campo == "password" else None)
             entry.place(x=150, y=y)
             entries[campo] = entry
-
-        tk.Label(nova_janela, text="Tipo de Usuário:", bg="#f0f0f0",
-                 fg="#333333", font=("Helvetica", 12)).place(x=30, y=210)
-        
-
-        #tipos = ["Coordenador"]
-        #y_tipo_positions = [210, 240, 270]
-
-        #for tipo, y in zip(tipos, y_tipo_positions):
-           #tk.Radiobutton(nova_janela, text=tipo, bg="#f0f0f0", fg="#333333",
-                          # variable=tipo_var, value=tipo, font=("Helvetica", 12)).place(x=180, y=y)
 
         tk.Button(nova_janela, text="Cadastrar", bg="#4CAF50", fg="#ffffff", font=("Helvetica", 12),
                   command=lambda: self.cadastrar_usuario(nova_janela, entries)).place(x=150, y=320)
@@ -766,13 +774,6 @@ class Sistema:  # Funcoes de funcionamento da aplicação e gerir banco de dados
                 "Cadastro", "Por favor, preencha todos os campos.")
 
 
-def encerrar_aplicacao():
-    root.destroy()
-
-
-if __name__ == "__main__":  # incializar o sistema.
-    root = tk.Tk()
-    sistema = Sistema(root)
-    # Associando a função de encerramento à ação de fechar a janela
-    root.protocol("WM_DELETE_WINDOW", encerrar_aplicacao)
-    root.mainloop()
+root = tk.Tk()
+sistema = Sistema(root)
+root.mainloop()
